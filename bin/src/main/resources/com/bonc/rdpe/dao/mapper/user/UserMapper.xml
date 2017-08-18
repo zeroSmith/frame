@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bonc.base.user.UserMapper">
+	<resultMap id="BaseResultMap" type="com.bonc.rdpe.entity.user.User">
+		<id column="user_id" jdbcType="VARCHAR" property="userId" />
+		<result column="login_id" jdbcType="VARCHAR" property="loginId" />
+		<result column="password" jdbcType="VARCHAR" property="password" />
+		<result column="user_name" jdbcType="VARCHAR" property="userName" />
+		<result column="sex" jdbcType="VARCHAR" property="sex" />
+		<result column="emall" jdbcType="VARCHAR" property="emall" />
+		<result column="mobile" jdbcType="VARCHAR" property="mobile" />
+		<result column="telephone" jdbcType="VARCHAR" property="telephone" />
+		<result column="state" jdbcType="VARCHAR" property="state" />
+		<result column="pwd_state" jdbcType="VARCHAR" property="pwdState" />
+		<result column="memo" jdbcType="VARCHAR" property="memo" />
+		<result column="reg_date" jdbcType="TIMESTAMP" property="regDate" />
+		<result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+		<result column="creater_id" jdbcType="VARCHAR" property="createrId" />
+		<result column="org_id" jdbcType="VARCHAR" property="orgId" />
+		<result column="data_auth" jdbcType="VARCHAR" property="dataAuth" />
+		<result column="lock_date" jdbcType="TIMESTAMP" property="lockDate" />
+		<result column="lock_login_times" jdbcType="DECIMAL" property="lockLoginTimes" />
+		<result column="pwd_valid_state" jdbcType="DECIMAL" property="pwdValidState" />
+		<result column="tenant_admin" jdbcType="DECIMAL" property="tenantAdmin" />
+		<result column="pwd_update_date" jdbcType="TIMESTAMP" property="pwdUpdateDate" />
+		<result column="login_date" jdbcType="TIMESTAMP" property="lastLoginDate" />
+		<result column="tenant_id" jdbcType="VARCHAR" property="tenantId" />
+		<collection property="orgnization"
+			ofType="com.bonc.rdpe.entity.orgnization.Orgnization">
+			<result column="organization_id" jdbcType="VARCHAR" property="orgId" />
+			<result column="org_name" jdbcType="VARCHAR" property="orgName" />
+		</collection>
+	</resultMap>
+	<sql id="Base_Column_List">
+		pure_user.user_id, pure_user.login_id, pure_user.password, pure_user.user_name,
+		pure_user.sex,
+		pure_user.emall, pure_user.mobile, pure_user.telephone, pure_user.state,
+		pure_user.pwd_state,
+		pure_user.memo, pure_user.reg_date, pure_user.update_date, pure_user.creater_id,
+		pure_user.org_id,
+		pure_user.data_auth, pure_user.lock_date, pure_user.lock_login_times,
+		pure_user.pwd_valid_state, pure_user.tenant_admin,
+		pure_user.pwd_update_date, pure_user.tenant_id
+	</sql>
+	<select id="selectAll" parameterType="java.util.HashMap"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from pure_user
+	</select>
+	<select id="selectByPrimaryKey" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select t.*,pure_org.org_id "organization_id",pure_org.org_name from (
+		select distinct
+		<include refid="Base_Column_List" />
+		,login_date
+		from pure_user left join
+		(select user_id, login_ip, max(login_date) login_date
+		from pure_user_login_log t
+		where t.user_id = (select pure_user.user_id
+		from pure_user
+		where pure_user.user_id = #{userId,jdbcType=VARCHAR})
+		group by user_id, login_ip) t
+		on (pure_user.user_id = t.user_id)
+		where pure_user.user_id =#{userId,jdbcType=VARCHAR}
+		order by login_date desc) t
+		left join pure_user_org_ref on (
+		t.user_id = pure_user_org_ref.user_id
+		)
+		left join pure_org on (
+		pure_user_org_ref.org_id = pure_org.org_id
+		)
+	</select>
+	<select id="selectByLoginId" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select distinct
+		<include refid="Base_Column_List" />
+		,login_date
+		from pure_user left join
+		(select user_id, login_ip, max(login_date) login_date
+		from pure_user_login_log t
+		where t.user_id =
+		(select pure_user.user_id
+		from pure_user
+		where pure_user.login_id = #{loginId,jdbcType=VARCHAR})
+		group by user_id, login_ip) t on (pure_user.user_id =
+		t.user_id)
+		where pure_user.login_id =#{loginId,jdbcType=VARCHAR}
+		order by login_date desc
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from pure_user
+		where user_id = #{userId,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteUserOrgRef" parameterType="java.lang.String">
+		delete from pure_user_org_ref
+		where user_id = #{userId,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteUserRoleRef" parameterType="java.lang.String">
+		delete from pure_user_role
+		where user_id = #{userId,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteUserAuthRef" parameterType="java.lang.String">
+		delete from pure_user_auth
+		where user_id = #{userId,jdbcType=VARCHAR}
+	</delete>
+	<insert id="insert" parameterType="com.bonc.rdpe.entity.user.User"> insert into PURE_USER
+		(user_id, login_id, password, user_name, sex, emall, mobile,
+		telephone, state, pwd_state, memo, reg_date, update_date, creater_id,
+		org_id, data_auth, lock_date, lock_login_times, pwd_valid_state,
+		tenant_admin, pwd_update_date, tenant_id) values
+		(#{userId,jdbcType=VARCHAR}, #{loginId,jdbcType=VARCHAR},
+		#{password,jdbcType=VARCHAR}, #{userName,jdbcType=VARCHAR},
+		#{sex,jdbcType=VARCHAR}, #{emall,jdbcType=VARCHAR},
+		#{mobile,jdbcType=VARCHAR}, #{telephone,jdbcType=VARCHAR},
+		#{state,jdbcType=VARCHAR}, #{pwdState,jdbcType=VARCHAR},
+		#{memo,jdbcType=VARCHAR}, #{regDate,jdbcType=TIMESTAMP},
+		#{updateDate,jdbcType=TIMESTAMP}, #{createrId,jdbcType=VARCHAR},
+		#{orgId,jdbcType=VARCHAR}, #{dataAuth,jdbcType=VARCHAR},
+		#{lockDate,jdbcType=TIMESTAMP}, #{lockLoginTimes,jdbcType=DECIMAL},
+		#{pwdValidState,jdbcType=DECIMAL}, #{tenantAdmin,jdbcType=DECIMAL},
+		#{pwdUpdateDate,jdbcType=TIMESTAMP}, #{tenantId,jdbcType=VARCHAR})
+	</insert>
+	<insert id="insertSelective" parameterType="com.bonc.rdpe.entity.user.User">
+		insert into pure_user
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userId != null">
+				user_id,
+			</if>
+			<if test="loginId != null">
+				login_id,
+			</if>
+			<if test="password != null">
+				password,
+			</if>
+			<if test="userName != null">
+				user_name,
+			</if>
+			<if test="sex != null">
+				sex,
+			</if>
+			<if test="emall != null">
+				emall,
+			</if>
+			<if test="mobile != null">
+				mobile,
+			</if>
+			<if test="telephone != null">
+				telephone,
+			</if>
+			<if test="state != null">
+				state,
+			</if>
+			<if test="pwdState != null">
+				pwd_state,
+			</if>
+			<if test="memo != null">
+				memo,
+			</if>
+			<if test="regDate != null">
+				reg_date,
+			</if>
+			<if test="updateDate != null">
+				update_date,
+			</if>
+			<if test="createrId != null">
+				creater_id,
+			</if>
+			<if test="orgId != null">
+				org_id,
+			</if>
+			<if test="dataAuth != null">
+				data_auth,
+			</if>
+			<if test="lockDate != null">
+				lock_date,
+			</if>
+			<if test="lockLoginTimes != null">
+				lock_login_times,
+			</if>
+			<if test="pwdValidState != null">
+				pwd_valid_state,
+			</if>
+			<if test="tenantAdmin != null">
+				tenant_admin,
+			</if>
+			<if test="pwdUpdateDate != null">
+				pwd_update_date,
+			</if>
+			<if test="tenantId != null">
+				tenant_id,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userId != null">
+				#{userId,jdbcType=VARCHAR},
+			</if>
+			<if test="loginId != null">
+				#{loginId,jdbcType=VARCHAR},
+			</if>
+			<if test="password != null">
+				#{password,jdbcType=VARCHAR},
+			</if>
+			<if test="userName != null">
+				#{userName,jdbcType=VARCHAR},
+			</if>
+			<if test="sex != null">
+				#{sex,jdbcType=VARCHAR},
+			</if>
+			<if test="emall != null">
+				#{emall,jdbcType=VARCHAR},
+			</if>
+			<if test="mobile != null">
+				#{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="telephone != null">
+				#{telephone,jdbcType=VARCHAR},
+			</if>
+			<if test="state != null">
+				#{state,jdbcType=VARCHAR},
+			</if>
+			<if test="pwdState != null">
+				#{pwdState,jdbcType=VARCHAR},
+			</if>
+			<if test="memo != null">
+				#{memo,jdbcType=VARCHAR},
+			</if>
+			<if test="regDate != null">
+				#{regDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="updateDate != null">
+				#{updateDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="createrId != null">
+				#{createrId,jdbcType=VARCHAR},
+			</if>
+			<if test="orgId != null">
+				#{orgId,jdbcType=VARCHAR},
+			</if>
+			<if test="dataAuth != null">
+				#{dataAuth,jdbcType=VARCHAR},
+			</if>
+			<if test="lockDate != null">
+				#{lockDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="lockLoginTimes != null">
+				#{lockLoginTimes,jdbcType=DECIMAL},
+			</if>
+			<if test="pwdValidState != null">
+				#{pwdValidState,jdbcType=DECIMAL},
+			</if>
+			<if test="tenantAdmin != null">
+				#{tenantAdmin,jdbcType=DECIMAL},
+			</if>
+			<if test="pwdUpdateDate != null">
+				#{pwdUpdateDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="tenantId != null">
+				#{tenantId,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKeySelective" parameterType="com.bonc.rdpe.entity.user.User">
+		update pure_user
+		<set>
+			<if test="loginId != null">
+				login_id = #{loginId,jdbcType=VARCHAR},
+			</if>
+			<if test="password != null">
+				password = #{password,jdbcType=VARCHAR},
+			</if>
+			<if test="userName != null">
+				user_name = #{userName,jdbcType=VARCHAR},
+			</if>
+			<if test="sex != null">
+				sex = #{sex,jdbcType=VARCHAR},
+			</if>
+			<if test="emall != null">
+				emall = #{emall,jdbcType=VARCHAR},
+			</if>
+			<if test="mobile != null">
+				mobile = #{mobile,jdbcType=VARCHAR},
+			</if>
+			<if test="telephone != null">
+				telephone = #{telephone,jdbcType=VARCHAR},
+			</if>
+			<if test="state != null">
+				state = #{state,jdbcType=VARCHAR},
+			</if>
+			<if test="pwdState != null">
+				pwd_state = #{pwdState,jdbcType=VARCHAR},
+			</if>
+			<if test="memo != null">
+				memo = #{memo,jdbcType=VARCHAR},
+			</if>
+			<if test="updateDate != null">
+				update_date = #{updateDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="createrId != null">
+				creater_id = #{createrId,jdbcType=VARCHAR},
+			</if>
+			<if test="orgId != null">
+				org_id = #{orgId,jdbcType=VARCHAR},
+			</if>
+			<if test="dataAuth != null">
+				data_auth = #{dataAuth,jdbcType=VARCHAR},
+			</if>
+			<if test="lockDate != null">
+				lock_date = #{lockDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="lockLoginTimes != null and lockLoginTimes != -1">
+				lock_login_times = (LOCK_LOGIN_TIMES+1),
+			</if>
+			<if test="pwdValidState != null">
+				pwd_valid_state = #{pwdValidState,jdbcType=DECIMAL},
+			</if>
+			<if test="tenantAdmin != null">
+				tenant_admin = #{tenantAdmin,jdbcType=DECIMAL},
+			</if>
+			<if test="pwdUpdateDate != null">
+				pwd_update_date = #{pwdUpdateDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="tenantId != null">
+				tenant_id = #{tenantId,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where user_id = #{userId,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.bonc.rdpe.entity.user.User">
+		update pure_user
+		set login_id = #{loginId,jdbcType=VARCHAR},
+		password = #{password,jdbcType=VARCHAR},
+		user_name = #{userName,jdbcType=VARCHAR},
+		sex = #{sex,jdbcType=VARCHAR},
+		emall = #{emall,jdbcType=VARCHAR},
+		mobile = #{mobile,jdbcType=VARCHAR},
+		telephone = #{telephone,jdbcType=VARCHAR},
+		state = #{state,jdbcType=VARCHAR},
+		pwd_state = #{pwdState,jdbcType=VARCHAR},
+		memo = #{memo,jdbcType=VARCHAR},
+		reg_date = #{regDate,jdbcType=TIMESTAMP},
+		update_date = #{updateDate,jdbcType=TIMESTAMP},
+		creater_id = #{createrId,jdbcType=VARCHAR},
+		org_id = #{orgId,jdbcType=VARCHAR},
+		data_auth = #{dataAuth,jdbcType=VARCHAR},
+		lock_date = #{lockDate,jdbcType=TIMESTAMP},
+		lock_login_times = #{lockLoginTimes,jdbcType=DECIMAL},
+		pwd_valid_state = #{pwdValidState,jdbcType=DECIMAL},
+		tenant_admin = #{tenantAdmin,jdbcType=DECIMAL},
+		pwd_update_date = #{pwdUpdateDate,jdbcType=TIMESTAMP},
+		tenant_id = #{tenantId,jdbcType=VARCHAR}
+		where user_id = #{userId,jdbcType=VARCHAR}
+	</update>
+
+	<!-- 查询用户列表根据条件 -->
+	<select id="selectUserByCondition" parameterType="map"
+		resultMap="BaseResultMap">
+		select distinct pure_user.user_id, pure_user.login_id,
+		pure_user.user_name, pure_user.sex,
+		pure_user.emall, pure_user.mobile, pure_user.telephone, pure_user.state,
+		pure_user.pwd_state,
+		pure_user.memo, pure_user.reg_date, pure_user.update_date, pure_user.creater_id,
+		pure_user.org_id,
+		pure_user.data_auth, pure_user.lock_date, pure_user.lock_login_times,
+		pure_user.pwd_valid_state, pure_user.tenant_admin,
+		pure_user.pwd_update_date, pure_user.tenant_id
+		from pure_user left join pure_user_org_ref on (pure_user.user_id =
+		pure_user_org_ref.user_id)
+		where 1=1
+		<if test="loginId != null and loginId !=''">
+			and pure_user.login_id like '%${loginId}%'
+		</if>
+		<if test="userName != null and userName !=''">
+			and pure_user.user_name like '%${userName}%'
+		</if>
+		<if test="orgIds != null and orgIds !=''">
+			and pure_user_org_ref.org_id in (${orgIds})
+		</if>
+		order by pure_user.reg_date desc
+	</select>
+
+	<!-- 插入用户与组织的关系 -->
+	<insert id="insertUserOrgRef" parameterType="map">
+		insert into pure_user_org_ref (org_id,user_id) values (#{orgId},#{userId})
+	</insert>
+
+	<!-- 插入用户与角色关系 -->
+	<insert id="insertUserRoleRef" parameterType="map">
+		insert into pure_user_role (role_id,user_id) values(#{roleId},#{userId})
+	</insert>
+
+	<!-- 查询账号是否存在 -->
+	<select id="selectCountByLoginId" parameterType="String"
+		resultType="int">
+		select count(1) from pure_user where login_id = #{loginId}
+	</select>
+
+	<!-- 用户登录日志 -->
+	<insert id="insertLoginLog" parameterType="com.bonc.rdpe.entity.log.UserLoginLog">
+		insert into pure_user_login_log (user_id,login_date,login_ip)
+		values
+		(#{userId,jdbcType=VARCHAR},#{LoginDate,jdbcType=TIMESTAMP},#{loginIp,jdbcType=VARCHAR})
+	</insert>
+	<!-- 查询用户拥有的角色 -->
+	<select id="selectRoleByUser" parameterType="String" resultType="map">
+		select role_id "roleid", user_id "userid" from pure_user_role where
+		user_id = #{userId}
+	</select>
+	<!-- 查询组织机构下所有用户 -->
+	<select id="selectUserByOrgId" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select t.*
+		from pure_user t,pure_user_org_ref t1 where
+		t.user_id = t1.user_id
+		and t1.org_id = #{orgId}
+	</select>
+</mapper>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- spring的配置文件中只扫描带有@Controller注解的类 -->
+	<context:component-scan base-package="com.bonc.rdpe.controller">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+	<!-- 静态资源的访问 -->
+	<mvc:resources location="/resources/" mapping="/resources/**" />
+
+	<!-- 视图解析器 -->
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/pages/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+	<!-- 拦截器配置 -->
+	<bean id="securityInterceptor" class="com.bonc.rdpe.security.SpringMVCSecurityInterceptor">
+		<property name="securityInterceptorManager" ref="securityInterceptorManager"></property>
+	</bean>
+
+	<!-- 配置拦截器链 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<!-- 匹配的是url路径， 如果不配置或/**,将拦截所有的Controller -->
+			<mvc:mapping path="/**" />
+			<!-- 不拦截的url -->
+			<mvc:exclude-mapping path="/login/toLogin" />
+			<mvc:exclude-mapping path="/login/actionLogin" />
+			<mvc:exclude-mapping path="/resources/**" />
+			<ref bean="securityInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
+
+	<!-- 启用默认配置 -->
+	<mvc:annotation-driven>
+		<mvc:message-converters register-defaults="true">
+			<!-- 配置Fastjson支持 -->
+			<bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>text/html;charset=UTF-8</value>
+						<value>application/json</value>
+					</list>
+				</property>
+				<property name="features">
+					<list>
+						<value>WriteMapNullValue</value>
+						<value>QuoteFieldNames</value>
+						<value>WriteNullListAsEmpty</value>
+						<value>WriteNullBooleanAsFalse</value>
+						<value>WriteDateUseDateFormat</value>
+					</list>
+				</property>
+				<property name="dateFormat" value="yyyy-MM-dd HH:mm:ss"></property>
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+	<!-- 统一异常记录日志 -->
+	<bean class="com.bonc.rdpe.exception.SpringMVCExceptionResolver"></bean>
+
+	<!-- 上传文件的解析器 -->
+	<!--<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="1073741824" />
+		<property name="maxInMemorySize" value="10240" />
+		<property name="defaultEncoding" value="utf-8" />
+	</bean>-->
+</beans>

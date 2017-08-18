@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bonc.frame.web.mapper.role.RoleMapper">
+	<resultMap id="BaseResultMap" type="com.bonc.rdpe.entity.role.Role">
+		<id column="role_id" jdbcType="VARCHAR" property="roleId" />
+		<result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+		<result column="role_name" jdbcType="VARCHAR" property="roleName" />
+		<result column="memo" jdbcType="VARCHAR" property="memo" />
+		<result column="ord" jdbcType="DECIMAL" property="ord" />
+		<result column="tenant_id" jdbcType="VARCHAR" property="tenantId" />
+	</resultMap>
+	<resultMap id="ResourcesResultMap" type="com.bonc.rdpe.entity.resources.Resources">
+		<id column="resources_id" jdbcType="VARCHAR" property="resourcesId" />
+		<result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+		<result column="app_system_id" jdbcType="VARCHAR" property="appSystemId" />
+		<result column="resources_type_id" jdbcType="VARCHAR" property="resourcesTypeId" />
+		<result column="resources_name" jdbcType="VARCHAR" property="resourcesName" />
+		<result column="url" jdbcType="VARCHAR" property="url" />
+		<result column="ext1" jdbcType="VARCHAR" property="ext1" />
+		<result column="ext2" jdbcType="VARCHAR" property="ext2" />
+		<result column="ext3" jdbcType="VARCHAR" property="ext3" />
+		<result column="ext4" jdbcType="VARCHAR" property="ext4" />
+		<result column="memo" jdbcType="VARCHAR" property="memo" />
+		<result column="ord" jdbcType="DECIMAL" property="ord" />
+		<result column="path" jdbcType="VARCHAR" property="path" />
+		<result column="create_id" jdbcType="VARCHAR" property="createId" />
+		<result column="only_read" jdbcType="DECIMAL" property="onlyRead" />
+		<result column="from_sign" jdbcType="VARCHAR" property="fromSign" />
+		<result column="modify_fields" jdbcType="VARCHAR" property="modifyFields" />
+		<result column="tenant_id" jdbcType="VARCHAR" property="tenantId" />
+		<result column="resources_name" jdbcType="VARCHAR" property="text" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		role_id, parent_id, role_name, memo, ord, tenant_id
+	</sql>
+	<select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from pure_role where 1=1
+		<if test="roleName!=null and roleName != ''">
+			and role_name like '%${roleName}%'
+		</if>
+	</select>
+	<select id="selectResourcesByRoleId" parameterType="java.lang.String"
+		resultMap="ResourcesResultMap">
+		select t2.*
+		from pure_role t, pure_role_auth t1, pure_resources t2
+		where t.role_id = t1.role_id
+		and t1.resources_id = t2.resources_id
+		and t.role_id = #{roleId,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteResourcesByRoleId" parameterType="java.lang.String">
+		delete from pure_role_auth
+		where role_id = #{roleId,jdbcType=VARCHAR}
+	</delete>
+	<select id="selectByPrimaryKey" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from pure_role
+		where role_id = #{roleId,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from pure_role
+		where role_id = #{roleId,jdbcType=VARCHAR}
+	</delete>
+	<insert id="insert" parameterType="com.bonc.rdpe.entity.role.Role">
+		insert into pure_role (role_id, parent_id, role_name,
+		memo, ord, tenant_id
+		)
+		values (#{roleId,jdbcType=VARCHAR}, #{parentId,jdbcType=VARCHAR},
+		#{roleName,jdbcType=VARCHAR},
+		#{memo,jdbcType=VARCHAR}, #{ord,jdbcType=DECIMAL}, #{tenantId,jdbcType=VARCHAR}
+		)
+	</insert>
+	<insert id="insertSelective" parameterType="com.bonc.rdpe.entity.role.Role">
+		insert into pure_role
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="roleId != null">
+				role_id,
+			</if>
+			<if test="parentId != null">
+				parent_id,
+			</if>
+			<if test="roleName != null">
+				role_name,
+			</if>
+			<if test="memo != null">
+				memo,
+			</if>
+			<if test="ord != null">
+				ord,
+			</if>
+			<if test="tenantId != null">
+				tenant_id,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="roleId != null">
+				#{roleId,jdbcType=VARCHAR},
+			</if>
+			<if test="parentId != null">
+				#{parentId,jdbcType=VARCHAR},
+			</if>
+			<if test="roleName != null">
+				#{roleName,jdbcType=VARCHAR},
+			</if>
+			<if test="memo != null">
+				#{memo,jdbcType=VARCHAR},
+			</if>
+			<if test="ord != null">
+				#{ord,jdbcType=DECIMAL},
+			</if>
+			<if test="tenantId != null">
+				#{tenantId,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKeySelective" parameterType="com.bonc.rdpe.entity.role.Role">
+		update pure_role
+		<set>
+			<if test="parentId != null">
+				parent_id = #{parentId,jdbcType=VARCHAR},
+			</if>
+			<if test="roleName != null">
+				role_name = #{roleName,jdbcType=VARCHAR},
+			</if>
+			<if test="memo != null">
+				memo = #{memo,jdbcType=VARCHAR},
+			</if>
+			<if test="ord != null">
+				ord = #{ord,jdbcType=DECIMAL},
+			</if>
+			<if test="tenantId != null">
+				tenant_id = #{tenantId,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where role_id = #{roleId,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.bonc.rdpe.entity.role.Role">
+		update pure_role
+		set parent_id = #{parentId,jdbcType=VARCHAR},
+		role_name = #{roleName,jdbcType=VARCHAR},
+		memo = #{memo,jdbcType=VARCHAR},
+		ord = #{ord,jdbcType=DECIMAL},
+		tenant_id = #{tenantId,jdbcType=VARCHAR}
+		where role_id = #{roleId,jdbcType=VARCHAR}
+	</update>
+
+	<delete id="deleteResourceRoleRef" parameterType="String">
+		delete from pure_role_auth where role_id = #{roleId}
+	</delete>
+
+	<delete id="deleteUserRoleRef" parameterType="String">
+		delete from pure_user_role where role_id = #{roleId}
+	</delete>
+
+	<insert id="insertRoleResourceRef" parameterType="map">
+		insert into pure_role_auth (id,role_id,resources_id) values
+		(#{id},#{roleId},#{resourcesId})
+	</insert>
+</mapper>

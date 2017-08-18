@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+	<!--spring的配置文件中只扫描带有@Service注解的类 -->
+	<context:component-scan base-package="com.bonc.rdpe.service">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Service" />
+	</context:component-scan>
+
+
+	<!--spring的配置文件中只扫描带有@Component注解的类 -->
+	<context:component-scan base-package="com.bonc.rdpe.security">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Component" />
+	</context:component-scan>
+
+	<!-- 加载jdbc.properties文件 加密 -->
+	<!-- <bean class="com.bonc.rdpe.dao.JdbcConfigurer">
+		<property name="locations" value="classpath:jdbc_aes.properties" />
+		<property name="fileEncoding" value="UTF-8" />
+	</bean> -->
+	<!-- 加载jdbc.properties文件 明文 -->
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations" value="classpath:jdbc.properties" />
+		<property name="fileEncoding" value="UTF-8" />
+	</bean>
+
+
+	<!-- 配置数据库连接池 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="maxActive" value="${jdbc.maxActive}" />
+		<property name="maxIdle" value="${jdbc.maxIdle}" />
+		<property name="maxWait" value="${jdbc.maxWait}" />
+		<property name="defaultAutoCommit" value="true" />
+		<property name="testOnBorrow" value="true" />
+		<property name="testWhileIdle" value="true" />
+		<property name="testOnReturn" value="true" />
+		<!--#给出一条简单的sql语句进行验证 -->
+		<property name="validationQuery" value="${jdbc.validationQuery}" />
+	</bean>
+
+	<!-- 配置事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- configuration mybatis sessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:mybatis-conf.xml"></property>
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations">
+			<list>
+				<value>classpath*:com/bonc/rdpe/dao/mapper/*/*.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="sqlSessionFactory" />
+		<constructor-arg index="1" value="BATCH" />
+	</bean>
+
+	<bean id="daoHelper" class="com.bonc.rdpe.dao.DaoHelper">
+		<constructor-arg name="sqlSessionTemplate" ref="sqlSessionTemplate" />
+	</bean>
+
+	<bean id="springContextUtil" class="com.bonc.rdpe.util.SpringContextUtil" />
+
+	<!-- 开启事务控制的注解支持 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+</beans>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bonc.base.organization.mapper">
+	<resultMap id="BaseResultMap" type="com.bonc.rdpe.entity.orgnization.Orgnization">
+		<id column="org_id" jdbcType="VARCHAR" property="orgId" />
+		<result column="org_name" jdbcType="VARCHAR" property="orgName" />
+		<result column="org_name" jdbcType="VARCHAR" property="text" />
+		<result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+		<result column="ord" jdbcType="DECIMAL" property="ord" />
+		<result column="path" jdbcType="VARCHAR" property="path" />
+		<result column="tenant_id" jdbcType="VARCHAR" property="tenantId" />
+	</resultMap>
+	<sql id="Base_Column_Alias_List">
+		org_id "orgId", org_name "orgName", parent_id "parentId", ord "ord", path "path", tenant_id "tenantId"
+	</sql>
+
+	<!-- 查询所有的组织机构 -->
+	<select id="selectAll" resultType="map">
+		select
+		<include refid="Base_Column_Alias_List" />
+		from pure_org
+		order by ord
+	</select>
+
+	<!-- 查询所有的组织机构返回List<Orgnization> -->
+	<select id="selectAllOrg" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_Alias_List" />
+		from pure_org
+		order by ord
+	</select>
+
+	<!-- 根据组织机构Id查询其所有一级孩子节点 -->
+	<select id="selectByOrgId" resultType="map" parameterType="map">
+		select
+		<include refid="Base_Column_Alias_List" />
+		from pure_org
+		where (parent_id = #{orgId} or org_id = #{orgId})
+		<if test="tenantId != null">
+			and tenant_id = #{tenantId}
+		</if>
+		order by ord
+	</select>
+
+	<!-- 根据组织机构Id查询其所有孩子节点 -->
+	<select id="selectAllByOrgId" resultType="map" parameterType="map">
+		select
+		<include refid="Base_Column_Alias_List" />
+		from pure_org
+		where instr(path,(
+		select path
+		from pure_org
+		where org_id = #{orgId}
+		))>0
+		<if test="tenantId != null">
+			and tenant_id = #{tenantId}
+		</if>
+		order by ord
+	</select>
+
+	<!-- 根据用户Id查询其所属的组织机构的所有一级子节点 -->
+	<select id="selectByUserId" resultType="map" parameterType="map">
+		select
+		<include refid="Base_Column_Alias_List" />
+		from pure_org
+		where (parent_id in (
+		select org_id
+		from pure_user_org_ref
+		where user_id = #{userId,jdbcType=VARCHAR}
+		) or org_id in (
+		select org_id
+		from pure_user_org_ref
+		where user_id = #{userId,jdbcType=VARCHAR}
+		))
+		<if test="tenantId != null">
+			and tenant_id = #{tenantId,jdbcType=VARCHAR}
+		</if>
+		order by ord
+	</select>
+
+	<!-- 根据用户Id查询其所属的组织机构的所有孩子节点 -->
+	<select id="selectAllByUserId" resultType="map" parameterType="map">
+		select t.org_id as "orgId", t.org_name as "orgName", t.parent_id as "parentId", t.path as "path", t.tenant_id as "tenantId"
+       from pure_org t, pure_org t1
+       where instr(t.path,t1.path)>0
+             and t1.org_id in(
+                   select org_id
+                   from pure_user_org_ref
+                   where user_id = #{userId}
+             )
+		<if test="tenantId!= null">
+			and t.tenant_id = #{tenantId}
+		</if>
+		order by t.ord
+	</select>
+
+	<!-- 根据组织机构Id删除其所有子节点 -->
+	<delete id="deleteOrgByOrgId" parameterType="string">
+		delete
+		from pure_user_org_ref
+		where org_id = #{orgId}
+	</delete>
+
+	<delete id="deleteUserOrgRef" parameterType="string">
+		delete
+		from pure_org
+		where org_id = #{orgId}
+	</delete>
+
+	<select id="selectChildOrgTotal" parameterType="map" resultType="int">
+		select count(1) from pure_org where parent_id = #{orgId}
+	</select>
+
+	<!-- 添加节点 -->
+	<insert id="addOrg" parameterType="map">
+		insert into pure_org (
+		org_id, org_name, parent_id, ord, path
+		<if test="tenantId != null">
+			,tenant_id
+		</if>
+		)
+		values (
+		#{orgId}, #{orgName}, #{parentId}, #{ord}, #{path}
+		<if test="tenantId != null">
+			,#{tenantId}
+		</if>
+		)
+	</insert>
+
+	<!-- 修改节点 -->
+	<update id="updateOrg" parameterType="map">
+		update pure_org
+		set
+		org_name = #{orgName},
+		parent_id = #{parentId},
+		ord = #{ord},
+		path = #{path}
+		<if test="tenantId != null">
+			,tenant_id = #{tenantId}
+		</if>
+		where
+		org_id = #{orgId}
+	</update>
+</mapper>

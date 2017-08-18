@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bonc.frame.web.mapper.resources.ResourcesMapper">
+	<resultMap id="BaseResultMap" type="com.bonc.rdpe.entity.resources.Resources">
+		<id column="resources_id" jdbcType="VARCHAR" property="resourcesId" />
+		<result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+		<result column="app_system_id" jdbcType="VARCHAR" property="appSystemId" />
+		<result column="resources_type_id" jdbcType="VARCHAR" property="resourcesTypeId" />
+		<result column="resources_name" jdbcType="VARCHAR" property="resourcesName" />
+		<result column="url" jdbcType="VARCHAR" property="url" />
+		<result column="ext1" jdbcType="VARCHAR" property="ext1" />
+		<result column="ext2" jdbcType="VARCHAR" property="ext2" />
+		<result column="ext3" jdbcType="VARCHAR" property="ext3" />
+		<result column="ext4" jdbcType="VARCHAR" property="ext4" />
+		<result column="memo" jdbcType="VARCHAR" property="memo" />
+		<result column="ord" jdbcType="DECIMAL" property="ord" />
+		<result column="path" jdbcType="VARCHAR" property="path" />
+		<result column="create_id" jdbcType="VARCHAR" property="createId" />
+		<result column="only_read" jdbcType="DECIMAL" property="onlyRead" />
+		<result column="from_sign" jdbcType="VARCHAR" property="fromSign" />
+		<result column="modify_fields" jdbcType="VARCHAR" property="modifyFields" />
+		<result column="tenant_id" jdbcType="VARCHAR" property="tenantId" />
+		<result column="resources_name" jdbcType="VARCHAR" property="text" />
+		<result column="is_auth" jdbcType="VARCHAR" property="isAuth" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		resources_id, parent_id, app_system_id, resources_type_id, resources_name, url,
+		ext1,
+		ext2, ext3, ext4, memo, ord, path, create_id, only_read, from_sign,
+		modify_fields,
+		tenant_id
+	</sql>
+	<select id="selectResourcesList" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from pure_resources
+		order by ord
+	</select>
+	<select id="selectAll" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from pure_resources
+		order by resources_id
+	</select>
+	<select id="selectAllResourceList" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select
+		t.*, case
+		when t.user_id is null then
+		- 1
+		else
+		1
+		end is_auth
+		from (
+		select
+		distinct t1.*, t4.user_id
+		from
+		pure_resources t1
+		left join (
+		select
+		t2.resources_id,
+		t3.user_id
+		from
+		pure_user_role t3,
+		pure_role_auth t2
+		where
+		t3.role_id = t2.role_id
+		and t3.user_id = #{userId,jdbcType=VARCHAR}
+		) t4 on t1.resources_id = t4.resources_id
+		where
+		t1.resources_type_id = '1'
+		) t
+	</select>
+	<select id="selectAllButtonResourceList" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select
+		t.*, case
+		when t.user_id is null then
+		- 1
+		else
+		1
+		end is_auth
+		from (
+		select
+		distinct t1.*, t4.user_id
+		from
+		pure_resources t1
+		left join (
+		select
+		t2.resources_id,
+		t3.user_id
+		from
+		pure_user_role t3,
+		pure_role_auth t2
+		where
+		t3.role_id = t2.role_id
+		and t3.user_id = #{userId,jdbcType=VARCHAR}
+		) t4 on t1.resources_id = t4.resources_id
+		where
+		t1.resources_type_id = '3'
+		) t
+	</select>
+	<select id="selectChildrenResource" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from pure_resources t
+		order by resources_id
+	</select>
+	<select id="selectUserResource" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select distinct t1.*
+		from pure_resources t1, pure_role_auth t2
+		where t1.resources_id = t2.resources_id
+		and t1.resources_type_id != '3'
+		and t2.role_id in (select t.role_id from pure_user_role t where
+		t.user_id=#{userId,jdbcType=VARCHAR}) order by t1.ord
+	</select>
+	<select id="selectUserNoAuthResource" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select t1.*
+		from pure_role t, pure_resources t1, pure_role_auth t2
+		where t.role_id = t2.role_id
+		and t1.resources_id = t2.resources_id
+		and t.role_id not in (select t.role_id from pure_user_role t where
+		t.user_id=#{userId,jdbcType=VARCHAR})
+	</select>
+	<select id="selectUserRoleResource" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select t1.*
+		from pure_resources t1, pure_role_auth t2
+		where t1.resources_id = t2.resources_id
+		and t2.role_id in (select t.role_id from pure_user_role t where
+		t.user_id=#{userId,jdbcType=VARCHAR})
+	</select>
+	<select id="selectByPrimaryKey" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from pure_resources
+		where resources_id = #{resourcesId,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from pure_resources
+		where resources_id = #{resourcesId,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteRoleResourceRef" parameterType="java.lang.String">
+		delete from pure_role_auth where resources_id =
+		#{resourcesId,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteUserResourceRef" parameterType="java.lang.String">
+		delete from pure_user_auth where resources_id =
+		#{resourcesId,jdbcType=VARCHAR}
+	</delete>
+	<insert id="insert" parameterType="com.bonc.rdpe.entity.resources.Resources">
+		insert into pure_resources (resources_id, parent_id, app_system_id,
+		resources_type_id, resources_name, url,
+		ext1, ext2, ext3, ext4,
+		memo, ord, path, create_id,
+		only_read, from_sign, modify_fields,
+		tenant_id)
+		values (#{resourcesId,jdbcType=VARCHAR}, #{parentId,jdbcType=VARCHAR},
+		#{appSystemId,jdbcType=VARCHAR},
+		#{resourcesTypeId,jdbcType=VARCHAR}, #{resourcesName,jdbcType=VARCHAR}, #{url,jdbcType=VARCHAR},
+		#{ext1,jdbcType=VARCHAR}, #{ext2,jdbcType=VARCHAR},
+		#{ext3,jdbcType=VARCHAR}, #{ext4,jdbcType=VARCHAR},
+		#{memo,jdbcType=VARCHAR}, #{ord,jdbcType=DECIMAL},
+		#{path,jdbcType=VARCHAR}, #{createId,jdbcType=VARCHAR},
+		#{onlyRead,jdbcType=DECIMAL}, #{fromSign,jdbcType=VARCHAR},
+		#{modifyFields,jdbcType=VARCHAR},
+		#{tenantId,jdbcType=VARCHAR})
+	</insert>
+	<insert id="insertSelective" parameterType="com.bonc.rdpe.entity.resources.Resources">
+		insert into pure_resources
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="resourcesId != null">
+				resources_id,
+			</if>
+			<if test="parentId != null">
+				parent_id,
+			</if>
+			<if test="appSystemId != null">
+				app_system_id,
+			</if>
+			<if test="resourcesTypeId != null">
+				resources_type_id,
+			</if>
+			<if test="resourcesName != null">
+				resources_name,
+			</if>
+			<if test="url != null">
+				url,
+			</if>
+			<if test="ext1 != null">
+				ext1,
+			</if>
+			<if test="ext2 != null">
+				ext2,
+			</if>
+			<if test="ext3 != null">
+				ext3,
+			</if>
+			<if test="ext4 != null">
+				ext4,
+			</if>
+			<if test="memo != null">
+				memo,
+			</if>
+			<if test="ord != null">
+				ord,
+			</if>
+			<if test="path != null">
+				path,
+			</if>
+			<if test="createId != null">
+				create_id,
+			</if>
+			<if test="onlyRead != null">
+				only_read,
+			</if>
+			<if test="fromSign != null">
+				from_sign,
+			</if>
+			<if test="modifyFields != null">
+				modify_fields,
+			</if>
+			<if test="tenantId != null">
+				tenant_id,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="resourcesId != null">
+				#{resourcesId,jdbcType=VARCHAR},
+			</if>
+			<if test="parentId != null">
+				#{parentId,jdbcType=VARCHAR},
+			</if>
+			<if test="appSystemId != null">
+				#{appSystemId,jdbcType=VARCHAR},
+			</if>
+			<if test="resourcesTypeId != null">
+				#{resourcesTypeId,jdbcType=VARCHAR},
+			</if>
+			<if test="resourcesName != null">
+				#{resourcesName,jdbcType=VARCHAR},
+			</if>
+			<if test="url != null">
+				#{url,jdbcType=VARCHAR},
+			</if>
+			<if test="ext1 != null">
+				#{ext1,jdbcType=VARCHAR},
+			</if>
+			<if test="ext2 != null">
+				#{ext2,jdbcType=VARCHAR},
+			</if>
+			<if test="ext3 != null">
+				#{ext3,jdbcType=VARCHAR},
+			</if>
+			<if test="ext4 != null">
+				#{ext4,jdbcType=VARCHAR},
+			</if>
+			<if test="memo != null">
+				#{memo,jdbcType=VARCHAR},
+			</if>
+			<if test="ord != null">
+				#{ord,jdbcType=DECIMAL},
+			</if>
+			<if test="path != null">
+				#{path,jdbcType=VARCHAR},
+			</if>
+			<if test="createId != null">
+				#{createId,jdbcType=VARCHAR},
+			</if>
+			<if test="onlyRead != null">
+				#{onlyRead,jdbcType=DECIMAL},
+			</if>
+			<if test="fromSign != null">
+				#{fromSign,jdbcType=VARCHAR},
+			</if>
+			<if test="modifyFields != null">
+				#{modifyFields,jdbcType=VARCHAR},
+			</if>
+			<if test="tenantId != null">
+				#{tenantId,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKeySelective" parameterType="com.bonc.rdpe.entity.resources.Resources">
+		update pure_resources
+		<set>
+			<if test="parentId != null">
+				parent_id = #{parentId,jdbcType=VARCHAR},
+			</if>
+			<if test="appSystemId != null">
+				app_system_id = #{appSystemId,jdbcType=VARCHAR},
+			</if>
+			<if test="resourcesTypeId != null">
+				resources_type_id = #{resourcesTypeId,jdbcType=VARCHAR},
+			</if>
+			<if test="resourcesName != null">
+				resources_name = #{resourcesName,jdbcType=VARCHAR},
+			</if>
+			<if test="url != null">
+				url = #{url,jdbcType=VARCHAR},
+			</if>
+			<if test="ext1 != null">
+				ext1 = #{ext1,jdbcType=VARCHAR},
+			</if>
+			<if test="ext2 != null">
+				ext2 = #{ext2,jdbcType=VARCHAR},
+			</if>
+			<if test="ext3 != null">
+				ext3 = #{ext3,jdbcType=VARCHAR},
+			</if>
+			<if test="ext4 != null">
+				ext4 = #{ext4,jdbcType=VARCHAR},
+			</if>
+			<if test="memo != null">
+				memo = #{memo,jdbcType=VARCHAR},
+			</if>
+			<if test="ord != null">
+				ord = #{ord,jdbcType=DECIMAL},
+			</if>
+			<if test="path != null">
+				path = #{path,jdbcType=VARCHAR},
+			</if>
+			<if test="createId != null">
+				create_id = #{createId,jdbcType=VARCHAR},
+			</if>
+			<if test="onlyRead != null">
+				only_read = #{onlyRead,jdbcType=DECIMAL},
+			</if>
+			<if test="fromSign != null">
+				from_sign = #{fromSign,jdbcType=VARCHAR},
+			</if>
+			<if test="modifyFields != null">
+				modify_fields = #{modifyFields,jdbcType=VARCHAR},
+			</if>
+			<if test="tenantId != null">
+				tenant_id = #{tenantId,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where resources_id = #{resourcesId,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.bonc.rdpe.entity.resources.Resources">
+		update pure_resources
+		set parent_id = #{parentId,jdbcType=VARCHAR},
+		app_system_id = #{appSystemId,jdbcType=VARCHAR},
+		resources_type_id = #{resourcesTypeId,jdbcType=VARCHAR},
+		resources_name = #{resourcesName,jdbcType=VARCHAR},
+		url = #{url,jdbcType=VARCHAR},
+		ext1 = #{ext1,jdbcType=VARCHAR},
+		ext2 = #{ext2,jdbcType=VARCHAR},
+		ext3 = #{ext3,jdbcType=VARCHAR},
+		ext4 = #{ext4,jdbcType=VARCHAR},
+		memo = #{memo,jdbcType=VARCHAR},
+		ord = #{ord,jdbcType=DECIMAL},
+		path = #{path,jdbcType=VARCHAR},
+		create_id = #{createId,jdbcType=VARCHAR},
+		only_read = #{onlyRead,jdbcType=DECIMAL},
+		from_sign = #{fromSign,jdbcType=VARCHAR},
+		modify_fields = #{modifyFields,jdbcType=VARCHAR},
+		tenant_id = #{tenantId,jdbcType=VARCHAR}
+		where resources_id = #{resourcesId,jdbcType=VARCHAR}
+	</update>
+
+	<select id="selectChildResource" parameterType="String"
+		resultType="int">
+		select count(1) from pure_resources where parent_id = #{resourceId}
+	</select>
+</mapper>

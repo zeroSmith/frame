@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bonc.frame.web.mapper.notice.NoticeMapper">
+	<resultMap id="BaseResultMap" type="com.bonc.rdpe.entity.notice.Notice">
+		<id column="notice_id" property="noticeId" jdbcType="VARCHAR" />
+		<result column="notice_title" property="noticeTitle" jdbcType="VARCHAR" />
+		<result column="notice_type" property="noticeType" jdbcType="VARCHAR" />
+		<result column="notice_content" property="noticeContent"
+			jdbcType="LONGVARCHAR" />
+		<result column="state" property="state" jdbcType="VARCHAR" />
+		<result column="from_sign" property="fromSign" jdbcType="VARCHAR" />
+		<result column="pubdate" property="pubdate" jdbcType="TIMESTAMP" />
+		<result column="pub_user_id" property="pubUserId" jdbcType="VARCHAR" />
+		<result column="rec_org_id" property="recOrgId" jdbcType="VARCHAR" />
+		<result column="user_name" property="pubPerson" jdbcType="VARCHAR" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		notice_id, notice_title, notice_type, notice_content, state, from_sign, pubdate,
+		pub_user_id,rec_org_id
+	</sql>
+
+	<!-- 已收到公告 -->
+	<select id="pageNoticeRec" resultType="map" parameterType="map">
+		select
+		a.notice_id as "noticeId", a.notice_title as "noticeTitle", a.notice_type as
+		"noticeType",
+		a.from_sign as "fromSign", a.pubdate as "pubdate", a.pub_user_id as "userId",
+		b.is_read as "isRead",c.user_name as "pubPerson"
+		from pure_notice a,pure_notice_user_ref b,pure_user c
+		where a.notice_id = b.notice_id
+		and a.pub_user_id = c.user_id
+		and b.user_id = #{userId}
+		order by a.pubdate desc
+	</select>
+
+	<!-- 已发送公告 -->
+	<select id="pageNoticeSend" resultMap="BaseResultMap"
+		parameterType="java.util.HashMap">
+		select
+		notice_id, notice_title, notice_type, state, from_sign, pubdate,
+		pub_user_id
+		from pure_notice
+		where 1=1
+		and state != '-2'
+		and pub_user_id = #{userId,jdbcType=VARCHAR}
+		<if test="noticeType != null">
+			and notice_type = #{noticeType,jdbcType=VARCHAR}
+		</if>
+		order by pubdate desc
+	</select>
+
+	<select id="pageQuery" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+		select
+		notice_id, notice_title, notice_type, state, from_sign, pubdate,
+		pub_user_id
+		from pure_notice
+		where 1=1
+		<if test="noticeType != null">
+			and notice_type = #{noticeType,jdbcType=VARCHAR}
+		</if>
+		<if test="state != null">
+			and state = #{state,jdbcType=VARCHAR}
+		</if>
+		<if test="fromSign != null">
+			and from_sign = #{fromSign,jdbcType=VARCHAR}
+		</if>
+		<if test="pubUserId != null">
+			and pub_user_id = #{userId,jdbcType=VARCHAR}
+		</if>
+		order by pubdate desc
+	</select>
+
+	<select id="selectUnreadNotice" resultMap="BaseResultMap"
+		parameterType="java.util.HashMap">
+		select
+		t.*
+		from pure_notice t,pure_notice_user_ref r
+		where t.notice_id = r.notice_id
+		and r.is_read = '-1'
+		<if test="userId != null">
+			and r.user_id = #{userId,jdbcType=VARCHAR}
+		</if>
+	</select>
+
+	<!-- 查询公告详细内容 -->
+	<!-- <select id="selectByNoticeId" resultType="map" parameterType="java.lang.String" 
+		> select A.NOTICE_ID as "noticeId", A.NOTICE_TITLE as "noticeTitle", A.NOTICE_TYPE 
+		as "noticeType", A.FROM_SIGN as "fromSign", A.PUBDATE as "pubdate", A.PUB_USER_ID 
+		as "userId",A.NOTICE_CONTENT as "noticeContent", C.USER_NAME as "pubPerson" 
+		from pure_notice A,PURE_USER C where A.PUB_USER_ID = C.USER_ID and NOTICE_ID 
+		= #{noticeId,jdbcType=VARCHAR} </select> -->
+
+	<!-- 查询公告详细内容 -->
+	<select id="selectByNoticeId" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select a.*,
+		c.user_name
+		from pure_notice a,pure_user c
+		where a.pub_user_id = c.user_id
+		and notice_id = #{noticeId,jdbcType=VARCHAR}
+	</select>
+
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select
+		<include refid="Base_Column_List" />
+		from pure_notice
+		where notice_id = #{noticeId,jdbcType=VARCHAR}
+	</select>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+		delete from pure_notice
+		where notice_id = #{noticeId,jdbcType=VARCHAR}
+	</delete>
+	<delete id="deleteRecNotice" parameterType="java.util.HashMap">
+		delete from pure_notice_user_ref
+		where 1=1
+		<if test="userId != null">
+			and user_id = #{userId,jdbcType=VARCHAR}
+		</if>
+		<if test="noticeId != null">
+			and notice_id = #{noticeId,jdbcType=VARCHAR}
+		</if>
+	</delete>
+	<insert id="insert" parameterType="com.bonc.rdpe.entity.notice.Notice">
+		insert into pure_notice (notice_id, notice_title, notice_type,
+		notice_content, state, from_sign,
+		pubdate, pub_user_id)
+		values (#{noticeId,jdbcType=VARCHAR}, #{noticeTitle,jdbcType=VARCHAR},
+		#{noticeType,jdbcType=VARCHAR},
+		#{noticeContent,jdbcType=LONGVARCHAR}, #{state,jdbcType=VARCHAR}, #{fromSign,jdbcType=VARCHAR},
+		#{pubdate,jdbcType=TIMESTAMP}, #{pubUserId,jdbcType=VARCHAR})
+	</insert>
+	<insert id="insertPublishNotice" parameterType="java.util.HashMap">
+		insert into pure_notice_user_ref
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="noticeId != null">
+				notice_id,
+			</if>
+			<if test="userId != null">
+				user_id,
+			</if>
+			<if test="isRead != null">
+				is_read,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="noticeId != null">
+				#{noticeId,jdbcType=VARCHAR},
+			</if>
+			<if test="userId != null">
+				#{userId,jdbcType=VARCHAR},
+			</if>
+			<if test="isRead != null">
+				#{isRead,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<insert id="insertSelective" parameterType="com.bonc.rdpe.entity.notice.Notice">
+		insert into pure_notice
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="noticeId != null">
+				notice_id,
+			</if>
+			<if test="noticeTitle != null">
+				notice_title,
+			</if>
+			<if test="noticeType != null">
+				notice_type,
+			</if>
+			<if test="noticeContent != null">
+				notice_content,
+			</if>
+			<if test="state != null">
+				state,
+			</if>
+			<if test="fromSign != null">
+				from_sign,
+			</if>
+			<if test="pubdate != null">
+				pubdate,
+			</if>
+			<if test="pubUserId != null">
+				pub_user_id,
+			</if>
+			<if test="recOrgId != null">
+				rec_org_id,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="noticeId != null">
+				#{noticeId,jdbcType=VARCHAR},
+			</if>
+			<if test="noticeTitle != null">
+				#{noticeTitle,jdbcType=VARCHAR},
+			</if>
+			<if test="noticeType != null">
+				#{noticeType,jdbcType=VARCHAR},
+			</if>
+			<if test="noticeContent != null">
+				#{noticeContent,jdbcType=LONGVARCHAR},
+			</if>
+			<if test="state != null">
+				#{state,jdbcType=VARCHAR},
+			</if>
+			<if test="fromSign != null">
+				#{fromSign,jdbcType=VARCHAR},
+			</if>
+			<if test="pubdate != null">
+				#{pubdate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="pubUserId != null">
+				#{pubUserId,jdbcType=VARCHAR},
+			</if>
+			<if test="recOrgId != null">
+				#{recOrgId,jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateByPrimaryKeySelective" parameterType="com.bonc.rdpe.entity.notice.Notice">
+		update pure_notice
+		<set>
+			<if test="noticeTitle != null">
+				notice_title = #{noticeTitle,jdbcType=VARCHAR},
+			</if>
+			<if test="noticeType != null">
+				notice_type = #{noticeType,jdbcType=VARCHAR},
+			</if>
+			<if test="noticeContent != null">
+				notice_content = #{noticeContent,jdbcType=LONGVARCHAR},
+			</if>
+			<if test="state != null">
+				state = #{state,jdbcType=VARCHAR},
+			</if>
+			<if test="fromSign != null">
+				from_sign = #{fromSign,jdbcType=VARCHAR},
+			</if>
+			<if test="pubdate != null">
+				pubdate = #{pubdate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="pubUserId != null">
+				pub_user_id = #{pubUserId,jdbcType=VARCHAR},
+			</if>
+			<if test="recOrgId != null">
+				rec_org_id = #{recOrgId,jdbcType=VARCHAR},
+			</if>
+		</set>
+		where notice_id = #{noticeId,jdbcType=VARCHAR}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.bonc.rdpe.entity.notice.Notice">
+		update pure_notice
+		set notice_title = #{noticeTitle,jdbcType=VARCHAR},
+		notice_type = #{noticeType,jdbcType=VARCHAR},
+		notice_content = #{noticeContent,jdbcType=LONGVARCHAR},
+		state = #{state,jdbcType=VARCHAR},
+		from_sign = #{fromSign,jdbcType=VARCHAR},
+		pubdate = #{pubdate,jdbcType=TIMESTAMP},
+		pub_user_id = #{pubUserId,jdbcType=VARCHAR}
+		where notice_id = #{noticeId,jdbcType=VARCHAR}
+	</update>
+
+	<!-- 全部标记为已读 -->
+	<update id="markRead" parameterType="map">
+		update pure_notice_user_ref
+		set is_read = '1'
+		where user_id = #{userId}
+		<if test="noticeId != null">
+			and notice_id = #{noticeId}
+		</if>
+	</update>
+
+</mapper>

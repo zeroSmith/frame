@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	
+	 <!-- 权限管理配置 -->
+	 <bean id="securityInterceptorManager" class="com.bonc.rdpe.security.interceptor.manager.SecurityInterceptorManager">
+	      <constructor-arg name="">
+	          <list>
+	                <ref bean="loginCheckInterceptor"/>
+                	<ref bean="resourceSecurityInterceptor"/>
+                	<ref bean="ButtonSecurityInterceptor"/>
+	          </list>
+	      </constructor-arg>
+	 </bean>
+    
+    
+     <!-- 验证是否登录拦截器 -->
+     <bean id="loginCheckInterceptor" class="com.bonc.rdpe.security.interceptor.LoginCheckInterceptor">
+          <property name="securityHandle" ref="loginCheckHandle"></property>
+     </bean> 
+     <!-- 菜单权限拦截器 -->
+     <bean id="resourceSecurityInterceptor" class="com.bonc.rdpe.security.interceptor.ResourceSecurityInterceptor">
+          <property name="securityHandle" ref="resourceSecurityHandle"></property>
+     </bean>
+     <!-- 按钮权限拦截器 -->
+     <bean id="ButtonSecurityInterceptor" class="com.bonc.rdpe.security.interceptor.ButtonSecurityInterceptor">
+          <property name="securityHandle" ref="ButtonSecurityHandle"></property>
+     </bean>
+     
+     <!-- 是否登录跳转控制器 -->
+     <bean id="loginCheckHandle" class="com.bonc.rdpe.security.handle.LoginCheckHandle">
+          <!-- 跳转到登录路径 -->
+          <property name="loginPageUri" value="/login/toLogin"></property>
+     </bean>
+     <!-- 菜单权限跳转控制器 -->
+     <bean id="resourceSecurityHandle" class="com.bonc.rdpe.security.handle.ResourceSecurityHandle">
+          <!-- 跳转到登录路径 -->
+          <property name="deniedUri" value="/resources/errors/503_error.jsp"></property>
+     </bean>
+     <!-- 按钮权限跳转控制器 -->
+     <bean id="ButtonSecurityHandle" class="com.bonc.rdpe.security.handle.ButtonSecurityHandle">
+          <!-- 跳转到登录路径 -->
+          <property name="deniedUri" value="/resources/b-error/503_error.jsp"></property>
+     </bean>
+</beans>
